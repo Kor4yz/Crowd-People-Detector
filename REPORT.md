@@ -1,64 +1,64 @@
-# Report: detection quality and improvement steps
+# Отчет: качество обнаружения и шаги по улучшению
 
-## What the current baseline does
+## Что делает текущая базовая линия
 
-- Runs Ultralytics YOLO on each frame and keeps only **person** detections.
-- Draws thin bounding boxes and a small label (`person <conf>`).
+- Запускает Ultralytics YOLO для каждого кадра и сохраняет только обнаруженные лица.
+- Рисует тонкие ограничивающие рамки и маленькую метку (`person <conf>`).
 
-This is a strong baseline because YOLO models pre-trained on COCO usually detect people well,
-but crowd videos often expose typical failure modes.
+Это хорошая отправная точка, потому что модели YOLO, предварительно обученные на COCO, обычно хорошо распознают людей,
+но в видеороликах с участием толпы часто обнаруживаются типичные сбои.
 
-## Expected failure modes in a crowded scene
+## Ожидаемые сбои в сценах с большим количеством людей
 
-1. **Occlusions & overlaps**
-   - People partially hidden by others often produce missed detections.
-   - Dense overlaps can lead to NMS suppressing true positives.
+1. ** Перекрытия и накладки**
+   - Люди, частично скрытые другими, часто не обнаруживаются.
+   - Плотное перекрытие может привести к тому, что NMS будет подавлять истинные положительные результаты.
 
-2. **Small objects**
-   - Far-away people can be very small in pixels, falling below the detector’s effective scale.
+2. ** Мелкие объекты**
+   - Люди, находящиеся на большом расстоянии, могут быть очень маленькими в пикселях, что не соответствует эффективному масштабу детектора.
 
-3. **Motion blur / compression artifacts**
-   - Fast motion, low light, or strong compression can reduce confidence and increase misses.
+3. ** Артефакты размытия/ сжатия изображения при движении**
+   - Быстрое движение, слабая освещенность или сильное сжатие могут снизить достоверность снимка и увеличить количество промахов.
 
-4. **False positives**
-   - Posters, mannequins, reflections, and similar patterns can be detected as people.
+4. ** Ложные срабатывания**
+   - Плакаты, манекены, отражения и подобные узоры могут быть распознаны как люди.
 
-## Practical steps to improve quality (in order)
+## Практические шаги по улучшению качества (по порядку)
 
-1. **Pick a stronger model**
-   - Try `yolov8s.pt` or `yolov8m.pt` first. Larger models usually improve recall on small/occluded people.
-   - If you must stay CPU-only, balance quality vs speed (e.g., `yolov8s` may be slower).
+1. ** Выберите более надежную модель**
+   - Сначала попробуйте `yolov8s.pt` или `yolov8m.pt`. Более крупные модели обычно улучшают память у людей маленького роста или с закрытыми глазами.
+   - Если вы хотите использовать только процессор, сбалансируйте качество и скорость (например, "yolov8s" может работать медленнее).
 
-2. **Threshold tuning**
-   - For crowds, lowering `--conf` can increase recall but may introduce false positives.
-   - Adjust `--iou` to reduce suppression of nearby people (sometimes slightly higher IoU helps keep more boxes).
+2. **Настройка порога**
+   - В случае скопления людей понижение значения "--conf" может увеличить скорость отзыва, но может привести к ложным срабатываниям.
+   - Измените значение "-долговая расписка", чтобы уменьшить помехи для окружающих (иногда, если немного увеличить размер расписки, можно сохранить больше коробок).
 
-3. **Increase effective resolution**
-   - If the video is low-res, consider:
-     - running inference on an upscaled frame (simple resize),
-     - or tiling the frame into overlapping patches (better for very small people).
-   - Tiling is more compute-heavy but can dramatically increase recall for small objects.
+3. **Увеличьте эффективное разрешение**
+   - Если видео с низким разрешением, рассмотрите:
+     - выполнение логического вывода на увеличенном фрейме (простое изменение размера),
+- или разбивка фрейма на перекрывающиеся участки (лучше для очень маленьких пользователей).
+   - Разбиение на листы требует больших вычислительных ресурсов, но может значительно повысить эффективность поиска небольших объектов.
 
-4. **Temporal consistency via tracking**
-   - Add a tracker (e.g., ByteTrack/DeepSORT) on top of detections.
-   - Benefits:
-     - smoother boxes (less flicker),
-     - ability to filter short-lived false positives,
-     - better perceived quality even if raw detector quality is unchanged.
+4. **Временная согласованность с помощью отслеживания**
+   - Добавление трекера (например, ByteTrack/DeepSORT) поверх обнаружений.
+   - Преимущества:
+     - более плавные рамки (меньше мерцания),
+- возможность фильтрации кратковременных ложных срабатываний,
+- лучшее качество восприятия, даже если исходное качество детектора не изменилось.
 
-5. **Light fine-tuning**
-   - Label ~200–500 frames (or crops) from the target video and fine-tune the detector.
-   - This helps adapt to camera angle, clothing distribution, lighting, and background.
+5. ** Тонкая настройка освещения**
+   - Выделите ~200-500 кадров (или обрезки) из целевого видео и точно настройте детектор.
+   - Это помогает адаптироваться к углу обзора камеры, распределению одежды, освещению и фону.
 
-6. **Smart post-processing**
-   - Apply perspective-aware box size constraints (if the camera is fixed).
-   - Consider soft-NMS or weighted boxes fusion in dense scenes.
+6. ** Интеллектуальная постобработка**
+   - Применяйте ограничения размера бокса с учетом перспективы (если камера установлена неподвижно).
+   - Рассмотрите возможность плавного или взвешенного слияния боксов в плотных сценах.
 
-## How to evaluate improvements
+## Как оценить улучшения
 
-- Sample and manually review a fixed set of frames (e.g., every N-th frame).
-- Track:
-  - missed people (false negatives),
-  - ghost detections (false positives),
-  - stability over time (flicker).
-- If time allows, annotate a small test set and compute mAP/precision/recall.
+- Выборка и ручной просмотр фиксированного набора кадров (например, каждого N-го кадра).
+- Отслеживание:
+  - пропущенных людей (ложноотрицательные результаты),
+- обнаружение призраков (ложноположительные результаты),
+- стабильность во времени (мерцание).
+- Если позволяет время, прокомментируйте небольшой набор тестов и вычислите карту / точность / отзыв.
