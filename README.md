@@ -1,45 +1,67 @@
-# Детектор людей в толпе
+# Crowd People Detector
 
-Проект на Python для обнаружения людей в видео и рисования ограничивающих рамок с указанием названия класса и достоверности.
+Python project for detecting people in a video and drawing bounding boxes with class name and confidence.
 
-## Функции
+This repository is a solution template for the test assignment: **detect people in `crowd.mp4`, draw detections, save annotated video, and provide analysis & improvement steps.**
 
-- Считывает видеофайл с помощью OpenCV.
-- Выполняет  Ультралитический вывод YOLO для каждого кадра.
-- Фильтрует обнаруженные объекты по классу человек .
-- Рисует тонкие рамки + помечает "человек <conf>", чтобы избежать сильного перекрытия.
-- Сохраняет видео с комментариями в формате MP4 (кодек "mp4v" для кроссплатформенной совместимости).
-- Выводит основную статистику времени выполнения (обработанные кадры, эффективное количество кадров в секунду, среднее количество людей на кадр).
+## Features
 
-## Требования
+- Reads a video file using OpenCV.
+- Runs **Ultralytics YOLO** inference on each frame.
+- Filters detections to class **person**.
+- Draws **thin** bounding boxes + label `person <conf>` to avoid heavy occlusion.
+- Saves annotated video to MP4 (`mp4v` codec for cross-platform compatibility).
+- Prints basic runtime stats (processed frames, effective FPS, avg people/frame).
 
-- Python **3.8+** (тестируемая версия: 3.8.10)
-- Операционная система: Linux / macOS / Windows
+## Requirements
 
->  Примечание о Torch: "ultralytics" зависит от `torch`. В некоторых системах вам может потребоваться сначала установить соответствующее колесо "torch".
-> Если на вашем компьютере не удается выполнить "pip install -r requirements.txt", установите PyTorch, следуя официальным инструкциям для вашей OS/CUDA,
-> затем повторно запустите установку по требованиям.
+- Python **3.8+** (tested target: 3.8.10)
+- OS: Linux / macOS / Windows
 
+> **Note about Torch:** `ultralytics` depends on `torch`. On some systems you may need to install a matching `torch` wheel first.
+> If `pip install -r requirements.txt` fails on your machine, install PyTorch following the official instructions for your OS/CUDA,
+> then re-run the requirements installation.
 
-Необязательные флаги:
+## Installation
 
-- `-модель yolov8n.pt ` (по умолчанию) или `yolov8s.pt ` / `yolov8m.pt `для повышения качества
-- `--conf 0,25` доверительный порог
-- `--процессор устройства` или `--устройство 0` для графического процессора
-- `--показать" для предварительного просмотра кадров (нажмите "q" для остановки)
-- `-максимальное количество кадров 300` для тестирования на подмножестве
+```bash
+python -m venv .venv
+# Windows:
+# .venv\Scripts\activate
+# Linux/macOS:
+source .venv/bin/activate
 
-## Выходные данные
+pip install -U pip
+pip install -r requirements.txt
+```
 
-Результирующий файл представляет собой видео в формате MP4 с выделенными людьми в общих чертах и с пометками.
+## Run
 
-## Анализ качества и идеи по улучшению (на высоком уровне)
+Put your input video near the project root (or provide a path).
 
-1. **Используйте более крупную модель** (`yolov8s.pt`/`yolov8m.pt`) или детектор, ориентированный на толпу.
-2. **Настройте пороговые значения** ("--conf", "--iou") в зависимости от плотности толпы и точки обзора камеры.
-3. **Отслеживание по кадрам** (ByteTrack/ DeepSORT) для стабилизации распознавания и уменьшения мерцания.
-4. **Улучшение разрешения**: увеличение масштаба или наложение фрагментов / исправлений для небольших объектов, находящихся на большом расстоянии.
-5. **Адаптация к предметной области**: точная настройка на небольшом подмножестве с маркировкой из "crowd.mp4".
-6. **Постобработка**: геометрические параметры (минимальный/максимальный размер поля в зависимости от перспективы), варианты NMS, soft-NMS.
+```bash
+python main.py --input crowd.mp4 --output output_annotated.mp4
+```
 
-Смотрите "REPORT.md` для более структурированного обсуждения.
+Optional flags:
+
+- `--model yolov8n.pt` (default) or `yolov8s.pt` / `yolov8m.pt` for better quality
+- `--conf 0.25` confidence threshold
+- `--device cpu` or `--device 0` for GPU
+- `--show` to preview frames (press `q` to stop)
+- `--max-frames 300` to test on a subset
+
+## Output
+
+The resulting file is an MP4 video with detected people outlined and labeled.
+
+## Quality analysis & improvement ideas (high-level)
+
+1. **Use a larger model** (`yolov8s.pt`/`yolov8m.pt`) or a crowd-focused detector.
+2. **Tune thresholds** (`--conf`, `--iou`) for the crowd density and camera viewpoint.
+3. **Track across frames** (ByteTrack/DeepSORT) to stabilize detections and reduce flicker.
+4. **Improve resolution**: upscaling or tiling/patch inference for far-away small people.
+5. **Domain adaptation**: fine-tune on a small labeled subset from `crowd.mp4`.
+6. **Post-processing**: geometric priors (min/max box size by perspective), NMS variants, soft-NMS.
+
+See `REPORT.md` for a more structured discussion.
